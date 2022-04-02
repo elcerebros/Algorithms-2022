@@ -38,7 +38,8 @@ public class JavaTasks {
      * В случае обнаружения неверного формата файла бросить любое исключение.
      */
     // Сортировка вставками (сортируется двумерный список по кол-ву секунд (time.get(i).get(3)))
-    // O(n ^ 2)
+    // T = O(n ^ 2)
+    // R = O(1) - количество переменных не зависит от размера входа
     public static void insertionSort(ArrayList<ArrayList<String>> time) {
         for (int i = 1; i < time.size(); i++) {
             ArrayList<String> currentList = time.get(i);
@@ -54,12 +55,13 @@ public class JavaTasks {
         }
     }
 
-    // Оценка сложности алгоритма: 2 * O(n ^ 2) + 2 * O(n) = O(n ^ 2)
+    // Оценка сложности алгоритма: T = 2 * O(n ^ 2) + 2 * O(n) = O(n ^ 2)
+    //                             R = O(1)
     static public void sortTimes(String inputName, String outputName) throws IOException {
         ArrayList<ArrayList<String>> timeAM = new ArrayList<>(); // Двумерный список для записи времени при AM
         ArrayList<ArrayList<String>> timePM = new ArrayList<>(); // Двумерный список для записи времени при PM
         String hour, min, sec; // Переменные, используемые для записи моментов времени
-        char timeFlag; // Переменна, в которую записывается A (из AM) или P (из PM)
+        String timeFlag; // Переменна, в которую записывается AM или PM
         int sum; // Итоговое кол-во секунд, используемое для сортировки
 
         // O(n)
@@ -69,18 +71,19 @@ public class JavaTasks {
                 // Текущий список, используемый для дальнейшей записи данных в timeAM или timePM
                 ArrayList<String> current = new ArrayList<>();
 
-                try {
-                    hour = line.substring(0, 2);
-                    min = line.substring(3, 5);
-                    sec = line.substring(6, 8);
-                    timeFlag = line.charAt(9);
+                hour = line.substring(0, 2);
+                min = line.substring(3, 5);
+                sec = line.substring(6, 8);
+                timeFlag = line.substring(9, 11);
 
-                    // Вычисление итогового кол-ва секунд ("12" считается за "00")
-                    if (hour.equals("12")) sum = Integer.parseInt(min) * 60 + Integer.parseInt(sec);
-                    else sum = Integer.parseInt(hour) * 3600 + Integer.parseInt(min) * 60 + Integer.parseInt(sec);
-                } catch (NumberFormatException e) {
-                    throw e;
+                // Проверка формата записи
+                if (Integer.parseInt(hour) >= 60 || Integer.parseInt(min) >= 60 || Integer.parseInt(sec) >= 60) {
+                    throw new NumberFormatException();
                 }
+
+                // Вычисление итогового кол-ва секунд ("12" считается за "00")
+                if (hour.equals("12")) sum = Integer.parseInt(min) * 60 + Integer.parseInt(sec);
+                else sum = Integer.parseInt(hour) * 3600 + Integer.parseInt(min) * 60 + Integer.parseInt(sec);
 
                 // Добавление составляющих момента времени в список current
                 current.add(hour);
@@ -88,8 +91,9 @@ public class JavaTasks {
                 current.add(sec);
                 current.add(String.valueOf(sum));
                 // Добавление текущих данных (current) в список timeAM или timePM
-                if (timeFlag == 'A') timeAM.add(current);
-                else if (timeFlag == 'P') timePM.add(current);
+                if (timeFlag.equals("AM")) timeAM.add(current);
+                else if (timeFlag.equals("PM")) timePM.add(current);
+                else throw new NumberFormatException();
             }
         }
 
@@ -137,40 +141,6 @@ public class JavaTasks {
      */
     static public void sortAddresses(String inputName, String outputName) {
         throw new NotImplementedError();
-
-        /* (просто наброски)
-        HashMap<HashMap<String, Integer>, String> arr = new HashMap<>();
-        HashMap<String, Integer> address = new HashMap<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
-            String line;
-            int i = 0;
-
-            while ((line = reader.readLine()) != null) {
-                String pattern = "([А-Яа-я]+\\s[А-Яа-я])(-\\s[А-Яа-я]+)([0-9]+)";
-                Pattern r = Pattern.compile(pattern);
-                Matcher m = r.matcher(line);
-
-                if (m.find()) {
-                    address.put(m.group(1), Integer.parseInt(m.group(2)));
-                    arr.put(address, m.group(0));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // name - [А-Яа-я]+\s[А-Яа-я]+
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {
-            for (Map.Entry<HashMap<String, Integer>, String> element : arr.entrySet()) {
-                writer.write(element.getKey().toString() + " " + element.getValue());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-         */
     }
 
     /**
@@ -204,7 +174,8 @@ public class JavaTasks {
      * 121.3
      */
     // Быстрая сортировка списка с элементами типа Double
-    // O(n * log n)
+    // T = O(n * log n)
+    // R = O(low) или O(high) - глубина рекурсии зависит от сочетания входных данных и способа определения опорного элемента
     public static void quickSortDouble(ArrayList<Double> array, int low, int high) {
         if (array.size() == 0) return;
         if (low >= high) return;
@@ -231,7 +202,8 @@ public class JavaTasks {
         if (high > i) quickSortDouble(array, i, high);
     }
 
-    // Оценка сложности алгоритма: 2 * O(n) + O(n * log n) = O(n * log n)
+    // Оценка сложности алгоритма: T = 2 * O(n) + O(n * log n) = O(n * log n);
+    //                             R = O(low) или O(high)
     static public void sortTemperatures(String inputName, String outputName) {
         ArrayList<Double> temperature = new ArrayList<>(); // Список, используемый для записи температур
 
@@ -291,7 +263,9 @@ public class JavaTasks {
      * 2
      * 2
      */
-    // Оценка сложности алгоритма: 4 * O(n) = o(n)
+    // Оценка сложности алгоритма:
+    // T = 4 * O(n) = O(n)
+    // R = O(1) - количество переменных не зависит от размера входа
     static public void sortSequence(String inputName, String outputName) {
         int[] types = new int[100000000]; // Массив, в котором индекс используется как вид считанного числа, а
                                           // значение - кол-во чисел определенного вида

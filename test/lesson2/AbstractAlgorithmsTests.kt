@@ -46,8 +46,22 @@ abstract class AbstractAlgorithmsTests {
         assertEquals(3 to 4, optimizeBuyAndSell("input/buysell_in1.txt"))
         assertEquals(8 to 12, optimizeBuyAndSell("input/buysell_in2.txt"))
         assertEquals(3 to 4, optimizeBuyAndSell("input/buysell_in3.txt"))
+        assertEquals(1 to 16, optimizeBuyAndSell("input/buysell_in4.txt"))
+        assertEquals(5 to 12, optimizeBuyAndSell("input/buysell_in5.txt"))
+        try {
+            val expectedAnswer = generatePrices(100)
+            assertEquals(expectedAnswer, optimizeBuyAndSell("temp_prices.txt"))
+        } finally {
+            File("temp_prices.txt").delete()
+        }
         try {
             val expectedAnswer = generatePrices(1000)
+            assertEquals(expectedAnswer, optimizeBuyAndSell("temp_prices.txt"))
+        } finally {
+            File("temp_prices.txt").delete()
+        }
+        try {
+            val expectedAnswer = generatePrices(10000)
             assertEquals(expectedAnswer, optimizeBuyAndSell("temp_prices.txt"))
         } finally {
             File("temp_prices.txt").delete()
@@ -77,6 +91,7 @@ abstract class AbstractAlgorithmsTests {
         assertEquals("", longestCommonSubstring("мой мир", "я"))
         assertEquals("зд", longestCommonSubstring("здравствуй мир", "мы здесь"))
         assertEquals("СЕРВАТОР", longestCommonSubstring("ОБСЕРВАТОРИЯ", "КОНСЕРВАТОРЫ"))
+        assertEquals("авиа", longestCommonSubstring("авиакомпания S7 airlines", "авиалинии"))
         assertEquals(
             "огда ", longestCommonSubstring(
                 """
@@ -114,10 +129,37 @@ abstract class AbstractAlgorithmsTests {
             )
         )
         assertEquals(
+            "е для ", longestCommonSubstring(
+                """
+Я видел лучшие умы моего поколения разрушенные безумием, умирающие от голода истерически обнажённые,
+
+волочащие свои тела по улицам чёрным кварталов ищущие болезненную дозу на рассвете,
+
+ангелоголовые хиппи сгорающие для древнего божественного совокупления со звёздным динамо в механизмах ночи,
+
+кто беден и одет в лохмотья со впалыми глазами бодрствовал курил в призрачной темноте холодноводных квартир плывущих по 
+небу через городские купола в созерцании живой энергии джаза,
+
+кто распахнул свой разум для Рая под Луной и видел мусульманских ангелов колеблющимися на светящейся крыше обители,
+                """.trimIndent(),
+                """
+кто приковал себя к подземке для вечного пути от Бэтери к святому Бронксу на бензендрине пока шум колёс не свалили их 
+дрожащих с разорванными ртами и разбитых в унынии прилежного ученика высушенном блеском в сумрачном сиянии Хаоса,
+                """.trimIndent()
+            )
+        )
+        assertEquals(
             "(с) Этот весь длинный-длинный текст является цитатой из Пушкина, поэма \"Руслан и Людмила\"",
             longestCommonSubstring(
                 File("input/ruslan_ludmila_1.txt").readText(),
                 File("input/ruslan_ludmila_2.txt").readText()
+            ).trim()
+        )
+        assertEquals(
+            "Для того чтобы придумать общую строку, к сожалению, нужна фантазия, но, увы, она отсутствует",
+            longestCommonSubstring(
+                File("input/edgar_allan_po.txt").readText(),
+                File("input/esenin.txt").readText()
             ).trim()
         )
     }
@@ -127,11 +169,14 @@ abstract class AbstractAlgorithmsTests {
         assertEquals(0, calcPrimesNumber(1))
         assertEquals(1, calcPrimesNumber(2))
         assertEquals(2, calcPrimesNumber(4))
+        assertEquals(3, calcPrimesNumber(5))
         assertEquals(4, calcPrimesNumber(10))
         assertEquals(8, calcPrimesNumber(20))
         assertEquals(10, calcPrimesNumber(29))
         assertEquals(20, calcPrimesNumber(71))
+        assertEquals(25, calcPrimesNumber(100))
         assertEquals(100, calcPrimesNumber(541))
+        assertEquals(135, calcPrimesNumber(767))
         assertEquals(500, calcPrimesNumber(3571))
         assertEquals(1000, calcPrimesNumber(7920))
         assertEquals(1229, calcPrimesNumber(10000))

@@ -3,6 +3,11 @@ package lesson2;
 import kotlin.NotImplementedError;
 import kotlin.Pair;
 
+import java.io.*;
+import java.util.ArrayList;
+
+import static java.lang.Math.sqrt;
+
 @SuppressWarnings("unused")
 public class JavaAlgorithms {
     /**
@@ -29,8 +34,58 @@ public class JavaAlgorithms {
      *
      * В случае обнаружения неверного формата файла бросить любое исключение.
      */
+    // Оценка сложности алгоритма: T = 2 * O(n) = O(n)
+    //                             R = O(1)
     static public Pair<Integer, Integer> optimizeBuyAndSell(String inputName) {
-        throw new NotImplementedError();
+        ArrayList<Integer> prices = new ArrayList<>(); // Массив, используемый для записи цен
+
+        // O(n)
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
+            String line;
+            prices.add(0); // Добавляем в массив нулевой элемент для того, чтобы нумерация элементов начиналась с единицы
+
+            while ((line = reader.readLine()) != null) {
+                prices.add(Integer.parseInt(line));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Обработка случая, при котором массив содержит недостаточное количество цен
+        if (prices.size() == 1 || prices.size() == 2) { throw new NumberFormatException(); }
+
+        // Подход Кадане в модифицированной форме (поиск максимального подмассива)
+        int difference = prices.get(2) - prices.get(1); // Разница двух элементов (первых)
+        int currentSum = difference; // Текущая сумма подмассива
+        int left = 1, right = 2; // Границы текущего подмассива
+        int maxSum = currentSum; // Сумма максимального подмассива
+        int maxLeft = 0, maxRight = 0; // Границы максимального подмассива
+
+        // O(n)
+        for (int i = 2; i < prices.size() - 1; i++) {
+            difference = prices.get(i + 1) - prices.get(i); // Текущая разница между элементами
+
+            // Случай, при котором продолжается вычисление текущей суммы
+            if (currentSum > 0) {
+                // Вычисление суммы префикса и сдвиг правой границы подмассива
+                currentSum += difference;
+                right++;
+            // Обновление суммы и границ текущего подмассива (текущая сумма оказалась неположительна)
+            } else {
+                currentSum = difference;
+                left = i;
+                right = i + 1;
+            }
+
+            // Запись максимального подмассива
+            if (currentSum > maxSum) {
+                maxSum = currentSum;
+                maxLeft = left;
+                maxRight = right;
+            }
+        }
+
+        return new Pair<>(maxLeft, maxRight);
     }
 
     /**
@@ -97,8 +152,54 @@ public class JavaAlgorithms {
      * Если имеется несколько самых длинных общих подстрок одной длины,
      * вернуть ту из них, которая встречается раньше в строке first.
      */
-    static public String longestCommonSubstring(String firs, String second) {
-        throw new NotImplementedError();
+    // Оценка сложности алгоритма: T = 2 * O(n ^ 2) + O(n) = O(n ^ 2)
+    //                             R = O(n ^ 2)
+    static public String longestCommonSubstring(String first, String second) {
+        int[][] matrix = new int[first.length()][second.length()]; // Матрица, используемая для подсчёта количества повторяющихся букв
+        int maxLength = -1; // Максимальная длина подстроки
+        int maxIndexI = 0; // Индекс конца максимальной подстроки
+        int location; // Расположения начала общей подстроки
+        StringBuilder result = new StringBuilder(); // Формирователь максимальной подстроки
+
+        // O(n ^ 2)
+        // Подсчёт повторяющихся букв в строках
+        // (максимальная подстрока = максимальная диагональ, элементы которой растут арифметически на единицу)
+        for (int i = 0; i < first.length(); i++) {
+            for (int j = 0; j < second.length(); j++) {
+                // Если буквы совпадают, то добавляем единицу к соответствующему элементу матрицы
+                if (first.charAt(i) == second.charAt(j)) {
+                    matrix[i][j]++;
+                    // Формируем диагональ, добавляя к соответствующему элементу матрицы значение прошлого элемента диагонали
+                    if (i != 0 && j !=0 && first.charAt(i - 1) == second.charAt(j - 1)) {
+                        matrix[i][j] += matrix[i - 1][j - 1];
+                    }
+                }
+            }
+        }
+
+        // O(n ^ 2)
+        // Поиск максимальной подстроки по концу максимальной диагонали
+        for (int i = 0; i < first.length(); i++) {
+            for (int j = 0; j < second.length(); j++) {
+                if (matrix[i][j] > maxLength) {
+                    maxLength = matrix[i][j];
+                    maxIndexI = i;
+                }
+            }
+        }
+
+        // O(n)
+        // Формирование подстроки по индексу её конца и по её длине
+        location = maxIndexI - maxLength + 1;
+        if (maxLength == 0) result = new StringBuilder(); // Случай, при котором общая подстрока не найдена
+        else {
+            for (int i = maxLength; i > 0; i--) {
+                result.append(first.charAt(location));
+                location++;
+            }
+        }
+
+        return result.toString();
     }
 
     /**
@@ -111,7 +212,43 @@ public class JavaAlgorithms {
      * Справка: простым считается число, которое делится нацело только на 1 и на себя.
      * Единица простым числом не считается.
      */
+    // Оценка сложности алгоритма: T = O(n ^ 2) + 2 * O(n) = O(n ^ 2)
+    //                             R = O(n)
     static public int calcPrimesNumber(int limit) {
-        throw new NotImplementedError();
+        // Обработка некорректного задания аргумента
+        if (limit <= 1) return 0;
+
+        // Будем использовать булевый массив, в котором флаг true означает, что число (индекс массива) простое,
+        // а флаг false - число составное
+        Boolean[] arr = new Boolean[limit + 1]; // Булевый массив, индексируемый числами от 2 до limit
+        int amount = 0; // Количество простых чисел
+
+        // O(n)
+        // Изначально массив заполняется значениями true
+        for (int i = 2; i <= limit; i++) {
+            arr[i] = true;
+        }
+
+        // O(n ^ 2)
+        // Решето́ Эратосфена (исключение составных чисел)
+        for (int i = 2; i <= sqrt(limit); i++) {
+            // За основание поиска составных чисел берётся первое незачёркнутое число i
+            if (arr[i]) {
+                // В массиве исключаются числа от i^2 до limit по i (i^2, i^2 + i, i^2 + 2 * i)
+                // Берём за основание i^2, а не i, потому что все меньшие числа, кратные i, обязательно имеют простой
+                // делитель меньше p, а они уже зачёркнуты е этому времени
+                for (int j = 0; i * i + j * i <= limit; j++) {
+                    arr[i * i + j * i] = false;
+                }
+            }
+        }
+
+        // O(n)
+        // Вычисление количества простых чисел
+        for (int i = 2; i < arr.length; i++) {
+            if (arr[i]) amount++;
+        }
+
+        return amount;
     }
 }

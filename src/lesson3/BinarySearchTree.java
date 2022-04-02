@@ -10,11 +10,13 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
 
     private static class Node<T> {
         final T value;
+        Node<T> parent;
         Node<T> left = null;
         Node<T> right = null;
 
-        Node(T value) {
+        Node(T value, Node<T> parent) {
             this.value = value;
+            this.parent = parent;
         }
     }
 
@@ -72,17 +74,20 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         if (comparison == 0) {
             return false;
         }
-        Node<T> newNode = new Node<>(t);
+        Node<T> newNode = new Node<>(t, null);
         if (closest == null) {
             root = newNode;
+            newNode.parent = null;
         }
         else if (comparison < 0) {
             assert closest.left == null;
             closest.left = newNode;
+            newNode.parent = closest;
         }
         else {
             assert closest.right == null;
             closest.right = newNode;
+            newNode.parent = closest;
         }
         size++;
         return true;
@@ -101,8 +106,76 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
      */
     @Override
     public boolean remove(Object o) {
-        // TODO
-        throw new NotImplementedError();
+        Node<T> node = new Node<>((T) o, null);
+        Node<T> removing = find((T) o);
+
+        int comparison = removing == null ? -1 : node.value.compareTo(removing.value);
+        // Узел node содержится в дереве
+        if (comparison == 0) {
+            Node<T> parent = removing.parent;
+
+            // Случай, при котором у удаляемого узла два потомка
+            if (removing.left != null && removing.right != null) {
+                Node<T> next = removing.right;
+                int comparisonCurrent;
+
+                // Поиск следующего узла в правом поддереве, используемого для замены удаляемому
+                while (next.value != null) {
+                    if (next.left != null) {
+                        comparisonCurrent = next.left.value.compareTo(next.value);
+                        if (comparisonCurrent < 0) { next = next.left; }
+                        else break;
+                    } else { break; }
+                }
+
+                // Замена потомков узла parent
+                if (next.parent.left == next) { next.parent.left = next.right; }
+                else { next.parent.right = next.right; }
+                // Замена поля parent правого потомка удаляемого узла (если он имеется)
+                if (next.right != null) { next.right.parent = next.parent; }
+                // Замена удаляемого узла на next
+                next.parent = removing.parent;
+                next.left = removing.left;
+                next.right = removing.right;
+                // Замена потомком родителя удаляемого узла
+                if (removing.parent != null) {
+                    if (removing.parent.left == removing) { removing.parent.left = next; }
+                    else { removing.parent.right = next; }
+                    // Случай, при котором удаляется корень дерева
+                } else { root = next; }
+
+            // Случай, при котором у удаляемого узла есть только один дочерний узел
+            } else if (removing.left != null || removing.right != null) {
+                // Если этот узел - корень дерева, то заменяем его
+                if (removing == root) { root = Objects.requireNonNullElseGet(removing.right, () -> removing.left); }
+                else {
+                    if (removing.right != null) {
+                        // Замена потомков узла parent
+                        if (parent.left == removing) { parent.left = removing.right; }
+                        else { parent.right = removing.right; }
+                        // Замена поля parent потомка удаляемого узла
+                        removing.right.parent = parent;
+                    } else {
+                        // Замена потомков узла parent
+                        if (parent.left == removing) { parent.left = removing.left; }
+                        else { parent.right = removing.left; }
+                        // Замена поля parent потомка удаляемого узла
+                        removing.left.parent = parent;
+                    }
+                }
+
+            // Случай, при котором у удаляемого узла нет потомков
+            } else {
+                // Замена удаляемого узла на null в потомках узла parent
+                if (parent.left == removing) { parent.left = null; }
+                if (parent.right == removing) { parent.right = null; }
+            }
+
+            size--;
+            return true;
+
+        // Узел node не содержится в дереве
+        } else { return false; }
     }
 
     @Nullable
@@ -119,8 +192,26 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
 
     public class BinarySearchTreeIterator implements Iterator<T> {
 
+        // Для организации итератора используем стек
+        private final LinkedList<Node<T>> stack = new LinkedList<>();
+
         private BinarySearchTreeIterator() {
-            // Добавьте сюда инициализацию, если она необходима.
+            Node<T> current = root; // Используем корень дерева для инициализации итератора
+            pushToStack(current); // Добавление в стек всех левых потомков корня (они гарантированно меньше корня)
+        }
+
+        // Добавление в стек всех левых потомков узла node
+        public void pushToStack(Node<T> node) {
+            Node<T> current = node;
+
+            while (current != null) {
+                stack.push(current); // Добавление узла current в верхушку стека
+
+                // Поиск левых узлов
+                if (current.left != null) {
+                    current = current.left;
+                } else { break; } // СлучаЙ, при котором был добавлен лист
+            }
         }
 
         /**
@@ -135,8 +226,7 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
          */
         @Override
         public boolean hasNext() {
-            // TODO
-            throw new NotImplementedError();
+            return !stack.isEmpty();
         }
 
         /**
@@ -154,8 +244,16 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
          */
         @Override
         public T next() {
-            // TODO
-            throw new NotImplementedError();
+            Node<T> node = stack.pop(); // Извлечение и возвращение узла из стека
+            Node<T> current = node; // Текущий обрабатываемый узел
+
+            // Добавление в стек левых узлов правого потомка current
+            if (current.right != null) {
+                current = current.right;
+                pushToStack(current);
+            }
+
+            return node.value;
         }
 
         /**

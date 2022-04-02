@@ -1,6 +1,7 @@
 package lesson1
 
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.assertThrows
 import util.PerfResult
 import util.estimate
 import java.io.BufferedWriter
@@ -8,6 +9,7 @@ import java.io.File
 import java.util.*
 import kotlin.math.abs
 import kotlin.system.measureNanoTime
+import kotlin.test.assertFailsWith
 
 abstract class AbstractTaskTests : AbstractFileTests() {
 
@@ -48,6 +50,36 @@ abstract class AbstractTaskTests : AbstractFileTests() {
         try {
             sortTimes("input/empty.txt", "temp.txt")
             assertFileContent("temp.txt", "")
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortTimes("input/time_in4.txt", "temp.txt")
+            assertFileContent(
+                "temp.txt",
+                """
+                     11:48:09 AM
+                     11:48:09 AM
+                     11:48:09 AM
+                     11:48:09 AM
+                     11:48:09 AM
+                     05:22:00 PM
+                     05:22:00 PM
+                     05:22:00 PM
+                     05:22:00 PM
+                     05:22:00 PM
+                """.trimIndent()
+            )
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            assertFailsWith<NumberFormatException> { sortTimes("input/time_in5.txt", "temp.txt") }
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            assertFailsWith<NumberFormatException> { sortTimes("input/time_in6.txt", "temp.txt") }
         } finally {
             File("temp.txt").delete()
         }
@@ -133,6 +165,12 @@ abstract class AbstractTaskTests : AbstractFileTests() {
         try {
             sortTemperatures("input/empty.txt", "temp.txt")
             assertFileContent("temp.txt", "")
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortTemperatures("input/temp_in2.txt", "temp.txt")
+            assertFileContent("temp.txt", File("input/temp_out2.txt").readLines())
         } finally {
             File("temp.txt").delete()
         }
@@ -298,6 +336,23 @@ abstract class AbstractTaskTests : AbstractFileTests() {
         try {
             sortSequence("input/empty.txt", "temp.txt")
             assertFileContent("temp.txt", "")
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortSequence("input/seq_in7.txt", "temp.txt")
+            assertFileContent("temp.txt", File("input/seq_out7.txt").readLines())
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortSequence("input/seq_in8.txt", "temp.txt")
+            assertFileContent("temp.txt", File("input/seq_out8.txt").readLines())
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            assertFailsWith<NumberFormatException> { sortSequence("input/seq_in9.txt", "temp.txt") }
         } finally {
             File("temp.txt").delete()
         }

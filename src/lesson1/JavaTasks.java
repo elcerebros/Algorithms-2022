@@ -4,6 +4,7 @@ import kotlin.NotImplementedError;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class JavaTasks {
@@ -40,9 +41,9 @@ public class JavaTasks {
     // Сортировка вставками (сортируется двумерный список по кол-ву секунд (time.get(i).get(3)))
     // T = O(n ^ 2)
     // R = O(1) - количество переменных не зависит от размера входа
-    public static void insertionSort(ArrayList<ArrayList<String>> time) {
+    public static void insertionSort(List<List<String>> time) {
         for (int i = 1; i < time.size(); i++) {
-            ArrayList<String> currentList = time.get(i);
+            List<String> currentList = time.get(i);
             int current = Integer.parseInt(time.get(i).get(3));
             int j = i - 1;
 
@@ -58,8 +59,8 @@ public class JavaTasks {
     // Оценка сложности алгоритма: T = 2 * O(n ^ 2) + 2 * O(n) = O(n ^ 2)
     //                             R = O(1)
     static public void sortTimes(String inputName, String outputName) throws IOException {
-        ArrayList<ArrayList<String>> timeAM = new ArrayList<>(); // Двумерный список для записи времени при AM
-        ArrayList<ArrayList<String>> timePM = new ArrayList<>(); // Двумерный список для записи времени при PM
+        List<List<String>> timeAM = new ArrayList<>(); // Двумерный список для записи времени при AM
+        List<List<String>> timePM = new ArrayList<>(); // Двумерный список для записи времени при PM
         String hour, min, sec; // Переменные, используемые для записи моментов времени
         String timeFlag; // Переменна, в которую записывается AM или PM
         int sum; // Итоговое кол-во секунд, используемое для сортировки
@@ -69,7 +70,7 @@ public class JavaTasks {
             String line;
             while ((line = reader.readLine()) != null) {
                 // Текущий список, используемый для дальнейшей записи данных в timeAM или timePM
-                ArrayList<String> current = new ArrayList<>();
+                List<String> current = new ArrayList<>();
 
                 hour = line.substring(0, 2);
                 min = line.substring(3, 5);
@@ -104,10 +105,10 @@ public class JavaTasks {
 
         // O(n)
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {
-            for (ArrayList<String> currentList : timeAM) {
+            for (List<String> currentList : timeAM) {
                 writer.write(currentList.get(0) + ":" + currentList.get(1) + ":" + currentList.get(2) + " AM\n");
             }
-            for (ArrayList<String> currentList : timePM) {
+            for (List<String> currentList : timePM) {
                 writer.write(currentList.get(0) + ":" + currentList.get(1) + ":" + currentList.get(2) + " PM\n");
             }
         }
@@ -173,39 +174,56 @@ public class JavaTasks {
      * 99.5
      * 121.3
      */
-    // Быстрая сортировка списка с элементами типа Double
-    // T = O(n * log n)
-    // R = O(low) или O(high) - глубина рекурсии зависит от сочетания входных данных и способа определения опорного элемента
-    public static void quickSortDouble(ArrayList<Double> array, int low, int high) {
-        if (array.size() == 0) return;
-        if (low >= high) return;
+    // Пирамидальная сортировка
+    // T = O(n * lon n)
+    // R = O(1) - сортирует на месте
+    public static void heapSort(List<Double> arr) {
+        int n = arr.size();
 
-        int middle = low + (high - low) / 2;
-        double prop = array.get(middle);
-
-        int i = low, j = high;
-        while (i <= j) {
-            while (array.get(i) < prop) { i++; }
-            while (array.get(j) > prop) { j--; }
-
-            if (i <= j) {
-                double temp = array.get(i);
-                array.set(i, array.get(j));
-                array.set(j, temp);
-
-                i++;
-                j--;
-            }
+        // Построение кучи (перегруппировка массива)
+        for (int i = n / 2 - 1; i >= 0; i--) {
+            heapify(arr, n, i);
         }
 
-        if (low < j) quickSortDouble(array, low, j);
-        if (high > i) quickSortDouble(array, i, high);
+        // Поочерёдное извлечение элементов из кучи
+        for (int i = n - 1; i >= 0; i--) {
+            // Перемещение текущего корня в конец
+            double temp = arr.get(0);
+            arr.set(0, arr.get(i));
+            arr.set(i, temp);
+
+            // Вызов функции heapify на уменьшенной куче
+            heapify(arr, i, 0);
+        }
+    }
+
+    // Функция преобразования в двоичную кучу поддерева с корневым узлом i
+    // (i - индекс в списке, n - размер кучи)
+    public static void heapify(List<Double> arr, int n, int i) {
+        int largest = i; // Наибольший элемент - корень
+        int l = 2 * i + 1; // Левый элемент
+        int r = 2 * i + 2; // Правый элемент
+
+        // Случай, при котором левый потомок больше корня
+        if (l < n && arr.get(l) > arr.get(largest)) largest = l;
+
+        // Случай, при котором правый потомок больше корня
+        if (r < n && arr.get(r) > arr.get(largest)) largest = r;
+
+        if (largest != i) {
+            double temp = arr.get(i);
+            arr.set(i, arr.get(largest));
+            arr.set(largest, temp);
+
+            // Рекурсивное преобразование в двоичную кучу затронутое поддерево
+            heapify(arr, n, largest);
+        }
     }
 
     // Оценка сложности алгоритма: T = 2 * O(n) + O(n * log n) = O(n * log n);
-    //                             R = O(low) или O(high)
+    //                             R = O(n)
     static public void sortTemperatures(String inputName, String outputName) {
-        ArrayList<Double> temperature = new ArrayList<>(); // Список, используемый для записи температур
+        List<Double> temperature = new ArrayList<>(); // Список, используемый для записи температур
 
         // O(n)
         try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
@@ -220,9 +238,11 @@ public class JavaTasks {
             e.printStackTrace();
         }
 
-        // Быстрая сортировка полученного списка
+        // Пирамидальная сортировка полученного списка
         // O(n * log n)
-        quickSortDouble(temperature, 0, temperature.size() - 1);
+        // R(1)
+        heapSort(temperature);
+
 
         // O(n)
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputName))) {

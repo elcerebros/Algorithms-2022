@@ -3,6 +3,7 @@ package lesson6.impl
 import lesson6.Graph.Edge
 import lesson6.Graph
 import lesson6.Graph.Vertex
+import java.beans.VetoableChangeListener
 
 class GraphBuilder {
 
@@ -64,6 +65,21 @@ class GraphBuilder {
                 }
             }
             return result
+        }
+
+        override fun deleteConnection(edge: Edge) {
+            connections.filter { (key, value) -> (key != edge.begin && value != edge) || (key != edge.end && value != edge) }
+        }
+
+        override fun dfs(vertex: Vertex, visited: HashMap<Vertex, Boolean>) {
+            visited[vertex] = true
+            val edges = this.getConnections(vertex)
+
+            for (edge in edges) {
+                if (edge.value.begin == vertex && !visited[edge.value.end]!!) {
+                    dfs(edge.value.end, visited)
+                }
+            }
         }
     }
 }

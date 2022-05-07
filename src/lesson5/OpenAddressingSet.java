@@ -1,10 +1,10 @@
 package lesson5;
 
-import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class OpenAddressingSet<T> extends AbstractSet<T> {
@@ -17,6 +17,8 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
 
     private int size = 0;
 
+    private final boolean[] removed;
+
     private int startingIndex(Object element) {
         return element.hashCode() & (0x7FFFFFFF >> (31 - bits));
     }
@@ -27,6 +29,10 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
         }
         this.bits = bits;
         capacity = 1 << bits;
+        removed = new boolean[capacity];
+        for (int i = 0; i < capacity - 1; i++) {
+            removed[i] = false;
+        }
         storage = new Object[capacity];
     }
 
@@ -43,7 +49,7 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
         int index = startingIndex(o);
         Object current = storage[index];
         while (current != null) {
-            if (current.equals(o)) {
+            if (current.equals(o) && !removed[index]) {
                 return true;
             }
             index = (index + 1) % capacity;
@@ -67,7 +73,7 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
         int startingIndex = startingIndex(t);
         int index = startingIndex;
         Object current = storage[index];
-        while (current != null) {
+        while (current != null && !removed[index]) {
             if (current.equals(t)) {
                 return false;
             }
@@ -78,6 +84,7 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
             current = storage[index];
         }
         storage[index] = t;
+        if (removed[index]) removed[index] = false;
         size++;
         return true;
     }
@@ -85,7 +92,7 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
     /**
      * Удаление элемента из таблицы
      *
-     * Если элемент есть в таблица, функция удаляет его из дерева и возвращает true.
+     * Если элемент есть в таблице, функция удаляет его из дерева и возвращает true.
      * В ином случае функция оставляет множество нетронутым и возвращает false.
      * Высота дерева не должна увеличиться в результате удаления.
      *
@@ -95,7 +102,20 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
      */
     @Override
     public boolean remove(Object o) {
-        return super.remove(o);
+        int index = startingIndex(o);
+        Object current = storage[index];
+
+        while (current != null) {
+            if (current.equals(o) && !removed[index]) {
+                removed[index] = true;
+                size--;
+                return true;
+            }
+            index = (index + 1) % capacity;
+            current = storage[index];
+        }
+
+        return false;
     }
 
     /**
@@ -111,7 +131,43 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
     @NotNull
     @Override
     public Iterator<T> iterator() {
-        // TODO
-        throw new NotImplementedError();
+        return new Iterator<>() {
+
+            private int currentIndex = 0;
+
+            private int currentAmount = 0;
+
+            private int delta = 0;
+
+            @Override
+            public boolean hasNext() {
+                if (currentAmount >= size) return false;
+
+                int nextIndex = currentIndex;
+                while (storage[nextIndex] == null) {
+                    nextIndex++;
+                }
+
+                delta = nextIndex - currentIndex;
+                return true;
+            }
+
+            @Override
+            public T next() throws NullPointerException {
+                if (!this.hasNext()) throw new NoSuchElementException();
+
+                currentIndex += delta;
+                T current = (T) storage[currentIndex];
+
+                currentAmount++;
+                currentIndex++;
+                return current;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

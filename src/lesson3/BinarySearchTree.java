@@ -184,6 +184,9 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         return null;
     }
 
+    // Оценка сложности итератора двоичного дерева поиска:
+    // T = O(1)
+    // R = O(n)
     @NotNull
     @Override
     public Iterator<T> iterator() {
@@ -196,21 +199,19 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         private final LinkedList<Node<T>> stack = new LinkedList<>();
 
         private BinarySearchTreeIterator() {
-            Node<T> current = root; // Используем корень дерева для инициализации итератора
-            pushToStack(current); // Добавление в стек всех левых потомков корня (они гарантированно меньше корня)
+            pushToStack(root); // Используем корень дерева для инициализации итератора
         }
 
+        // O(1)
         // Добавление в стек всех левых потомков узла node
         public void pushToStack(Node<T> node) {
-            Node<T> current = node;
-
-            while (current != null) {
-                stack.push(current); // Добавление узла current в верхушку стека
+            while (node != null) {
+                stack.push(node); // Добавление узла в верхушку стека
 
                 // Поиск левых узлов
-                if (current.left != null) {
-                    current = current.left;
-                } else { break; } // СлучаЙ, при котором был добавлен лист
+                if (node.left != null) {
+                    node = node.left;
+                } else break; // СлучаЙ, при котором был добавлен лист
             }
         }
 
@@ -224,6 +225,7 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
          *
          * Средняя
          */
+        // O(1)
         @Override
         public boolean hasNext() {
             return !stack.isEmpty();
@@ -242,6 +244,7 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
          *
          * Средняя
          */
+        // O(1)
         @Override
         public T next() {
             Node<T> node = stack.pop(); // Извлечение и возвращение узла из стека

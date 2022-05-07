@@ -36,7 +36,7 @@ public class JavaAlgorithms {
      */
     // Оценка сложности алгоритма: T = 2 * O(n) = O(n)
     //                             R = O(1)
-    static public Pair<Integer, Integer> optimizeBuyAndSell(String inputName) {
+    static public Pair<Integer, Integer> optimizeBuyAndSell(String inputName) throws IOException {
         ArrayList<Integer> prices = new ArrayList<>(); // Массив, используемый для записи цен
 
         // O(n)
@@ -47,8 +47,6 @@ public class JavaAlgorithms {
             while ((line = reader.readLine()) != null) {
                 prices.add(Integer.parseInt(line));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         // Обработка случая, при котором массив содержит недостаточное количество цен
@@ -212,7 +210,7 @@ public class JavaAlgorithms {
      * Справка: простым считается число, которое делится нацело только на 1 и на себя.
      * Единица простым числом не считается.
      */
-    // Оценка сложности алгоритма: T = O(n ^ 2) + 2 * O(n) = O(n ^ 2)
+    // Оценка сложности алгоритма: T = O(n * log(log n)) + 2 * O(n) = O(n * log(log n))
     //                             R = O(n)
     static public int calcPrimesNumber(int limit) {
         // Обработка некорректного задания аргумента
@@ -229,7 +227,7 @@ public class JavaAlgorithms {
             arr[i] = true;
         }
 
-        // O(n ^ 2)
+        // O(n * log(log n))
         // Решето́ Эратосфена (исключение составных чисел)
         for (int i = 2; i <= sqrt(limit); i++) {
             // За основание поиска составных чисел берётся первое незачёркнутое число i

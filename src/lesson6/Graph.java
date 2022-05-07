@@ -3,6 +3,7 @@ package lesson6;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,6 +42,12 @@ public interface Graph {
 
     @NotNull
     Map<Vertex, Edge> getConnections(@NotNull Vertex v);
+
+    @NotNull
+    void deleteConnection(@NotNull Edge edge);
+
+    @NotNull
+    void dfs(@NotNull Vertex vertex, @NotNull HashMap<Vertex, Boolean> visited);
 
     @Nullable
     default Edge getConnection(@NotNull Vertex v1, @NotNull Vertex v2) {

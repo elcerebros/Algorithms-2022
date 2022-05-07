@@ -108,7 +108,9 @@ abstract class AbstractOpenAddressingSetTest {
             val openAddressingSetIter = openAddressingSet.iterator()
             println("Checking if the iterator traverses the entire set...")
             while (openAddressingSetIter.hasNext()) {
-                controlSet.remove(openAddressingSetIter.next())
+                val cur = openAddressingSetIter.next()
+                controlSet.remove(cur)
+                println(cur)
             }
             assertTrue(
                 controlSet.isEmpty(),

@@ -1,9 +1,9 @@
 package lesson6;
 
 import kotlin.NotImplementedError;
+import lesson6.impl.GraphBuilder;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class JavaGraphTasks {
@@ -33,8 +33,101 @@ public class JavaGraphTasks {
      * Справка: Эйлеров цикл -- это цикл, проходящий через все рёбра
      * связного графа ровно по одному разу
      */
+    private static boolean checkEulerPath(Graph graph) {
+        int oddVertex = 0; // Кол-во нечётных вершин
+        Set<Graph.Vertex> vertices = graph.getVertices(); // Множество вершин графа
+
+        HashMap<Graph.Vertex, Boolean> visited = new HashMap<>(); // Мэп, в котором отмечаются пройденные вершины
+        for (Graph.Vertex vertex : vertices) {
+            visited.put(vertex, false);
+        }
+
+        // Вычисление количества вершин нечётной степени
+        for (Graph.Vertex vertex : vertices) {
+            if (graph.getConnections(vertex).size() % 2 == 1) oddVertex++;
+            if (graph.getConnections(vertex).size() == 0) return false;
+        }
+        // Случай, при котором граф не является эйлеровым
+        if (oddVertex > 2) return false;
+
+        // Проверка графа на связность
+        for (Graph.Vertex vertex : vertices) {
+            if (graph.getConnections(vertex).size() > 0) {
+                graph.dfs(vertex, visited);
+                break;
+            }
+        }
+        for (Graph.Vertex vertex : vertices) {
+            if (!visited.get(vertex)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static List<Graph.Edge> findEulerLoop(Graph graph) {
-        throw new NotImplementedError();
+        if (!checkEulerPath(graph)) return new ArrayList<>();
+
+        // Инициализация
+        Stack<Graph.Vertex> stack = new Stack<>(); // stack
+        Set<Graph.Vertex> vertices = graph.getVertices(); // vertices
+        List<Graph.Edge> resFin = new ArrayList<>();
+        List<Graph.Vertex> result = new ArrayList<>();
+        Graph eul = graph;
+        Set<Graph.Edge> eulEdges = eul.getEdges();
+
+        Set<Graph.Edge> graphEdges = graph.getEdges(); // edges
+
+
+        for (Graph.Vertex v : vertices) {
+            // Если граф полуэйлеровый, то алгоритм следует запускать из вершины нечётной степени
+            for (Graph.Vertex ver : vertices) {
+                if (graph.getConnections(v).size() % 2 == 1) {
+                    v = ver;
+                    break;
+                }
+            }
+
+            stack.push(v);
+
+            while (!stack.isEmpty()) {
+                Graph.Vertex w = stack.peek(); // Берём верхнюю вершину из стека
+                boolean found_edge = false; // Флаг того, что ребро найдено / не найдено
+
+                // Ищем ребро, по которому ещё не прошли
+                for (Graph.Edge edge : graphEdges) {
+                    if (eulEdges.contains(edge)) {
+                        stack.push(edge.getEnd()); // Добавляем новую вершину в стек
+
+                        eulEdges.remove(edge);
+
+                        found_edge = true;
+                        break;
+                    }
+                }
+
+                if (!found_edge) {
+                    result.add(stack.peek()); // Не нашлось инцидентных вершин рёбер, по которым ещё не прошли
+                    stack.pop();
+                }
+            }
+
+            break;
+        }
+
+        if (result.size() != 0) {
+            for (int i = 0; i < result.size() - 2; i += 2) {
+                for (Graph.Edge edge : graphEdges) {
+                    if (edge.getBegin() == result.get(i) && edge.getEnd() == result.get(i + 1)) resFin.add(edge);
+                    break;
+                }
+            }
+            GraphBuilder.EdgeImpl edge = new GraphBuilder.EdgeImpl(1, result.get(0), result.get(result.size() - 1));
+            resFin.add(edge);
+        }
+
+        return resFin;
     }
 
     /**

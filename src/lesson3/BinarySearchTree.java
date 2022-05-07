@@ -195,18 +195,18 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
 
     public class BinarySearchTreeIterator implements Iterator<T> {
 
-        // Для организации итератора используем стек
-        private final LinkedList<Node<T>> stack = new LinkedList<>();
+        // Для организации итератора используем LinkedList
+        private final LinkedList<Node<T>> list = new LinkedList<>();
 
         private BinarySearchTreeIterator() {
-            pushToStack(root); // Используем корень дерева для инициализации итератора
+            pushToList(root); // Используем корень дерева для инициализации итератора
         }
 
         // O(1)
-        // Добавление в стек всех левых потомков узла node
-        public void pushToStack(Node<T> node) {
+        // Добавление в список всех левых потомков узла node
+        public void pushToList(Node<T> node) {
             while (node != null) {
-                stack.push(node); // Добавление узла в верхушку стека
+                list.push(node);
 
                 // Поиск левых узлов
                 if (node.left != null) {
@@ -228,7 +228,7 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         // O(1)
         @Override
         public boolean hasNext() {
-            return !stack.isEmpty();
+            return !list.isEmpty();
         }
 
         /**
@@ -247,13 +247,13 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         // O(1)
         @Override
         public T next() {
-            Node<T> node = stack.pop(); // Извлечение и возвращение узла из стека
+            Node<T> node = list.pop(); // Извлечение и возвращение узла из списка
             Node<T> current = node; // Текущий обрабатываемый узел
 
-            // Добавление в стек левых узлов правого потомка current
+            // Добавление в список левых узлов правого потомка current
             if (current.right != null) {
                 current = current.right;
-                pushToStack(current);
+                pushToList(current);
             }
 
             return node.value;

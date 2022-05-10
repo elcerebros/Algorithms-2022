@@ -184,9 +184,8 @@ public class BinarySearchTree<T extends Comparable<T>> extends AbstractSet<T> im
         return null;
     }
 
-    // Оценка сложности итератора двоичного дерева поиска:
-    // T = O(1)
-    // R = O(n)
+    // Оценка сложности итератора двоичного дерева поиска: T = O(1)
+    //                                                     R = O(n)
     @NotNull
     @Override
     public Iterator<T> iterator() {

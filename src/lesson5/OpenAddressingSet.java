@@ -128,34 +128,41 @@ public class OpenAddressingSet<T> extends AbstractSet<T> {
      *
      * Средняя (сложная, если поддержан и remove тоже)
      */
+    // Оценка сложности итератора: T = O(1)
+    //                             R = O(n)
     @NotNull
     @Override
     public Iterator<T> iterator() {
         return new Iterator<>() {
 
-            private int currentIndex = 0;
+            private int currentIndex = 0; // Индекс считываемой ячейки таблицы
 
-            private int currentAmount = 0;
+            private int currentAmount = 0; // Текущее количество считанных элементов
 
-            private int delta = 0;
+            private int delta; // Разница индексов между текущим и следующим элементом
 
+            // O(1)
             @Override
             public boolean hasNext() {
                 if (currentAmount >= size) return false;
 
-                int nextIndex = currentIndex;
-                while (storage[nextIndex] == null) {
-                    nextIndex++;
+                // Вычисление дельты
+                delta = 0;
+                while (storage[currentIndex] == null) {
+                    currentIndex++;
+                    delta++;
                 }
+                currentIndex -= delta;
 
-                delta = nextIndex - currentIndex;
                 return true;
             }
 
+            // O(1)
             @Override
             public T next() throws NullPointerException {
                 if (!this.hasNext()) throw new NoSuchElementException();
 
+                // Берём следующий элемент таблицы
                 currentIndex += delta;
                 T current = (T) storage[currentIndex];
 

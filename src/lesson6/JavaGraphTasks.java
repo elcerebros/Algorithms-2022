@@ -3,7 +3,10 @@ package lesson6;
 import kotlin.NotImplementedError;
 import lesson6.impl.GraphBuilder;
 
+import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public class JavaGraphTasks {
@@ -33,55 +36,59 @@ public class JavaGraphTasks {
      * Справка: Эйлеров цикл -- это цикл, проходящий через все рёбра
      * связного графа ровно по одному разу
      */
+    // Оценка сложности алгоритма: T = O(n)
+    //                             R = O(n)
     private static boolean checkEulerPath(Graph graph) {
         int oddVertex = 0; // Кол-во нечётных вершин
+        int countOfVertices = 0; // Кол-во вершин
         Set<Graph.Vertex> vertices = graph.getVertices(); // Множество вершин графа
-
         HashMap<Graph.Vertex, Boolean> visited = new HashMap<>(); // Мэп, в котором отмечаются пройденные вершины
         for (Graph.Vertex vertex : vertices) {
             visited.put(vertex, false);
+            countOfVertices++;
         }
 
         // Вычисление количества вершин нечётной степени
         for (Graph.Vertex vertex : vertices) {
             if (graph.getConnections(vertex).size() % 2 == 1) oddVertex++;
-            if (graph.getConnections(vertex).size() == 0) return false;
         }
+
         // Случай, при котором граф не является эйлеровым
-        if (oddVertex > 2) return false;
+        if (oddVertex > 2 || countOfVertices < 3) return false;
 
         // Проверка графа на связность
         for (Graph.Vertex vertex : vertices) {
             if (graph.getConnections(vertex).size() > 0) {
-                graph.dfs(vertex, visited);
+                graph.dfsVisited(vertex, visited);
                 break;
             }
         }
         for (Graph.Vertex vertex : vertices) {
-            if (!visited.get(vertex)) {
-                return false;
-            }
+            if (!visited.get(vertex)) return false;
         }
 
         return true;
     }
 
+    // Оценка сложности алгоритма: T = O(n^2) + O(n * log n)
+    //                             R = O(n)
     public static List<Graph.Edge> findEulerLoop(Graph graph) {
         if (!checkEulerPath(graph)) return new ArrayList<>();
 
         // Инициализация
-        Stack<Graph.Vertex> stack = new Stack<>(); // stack
-        Set<Graph.Vertex> vertices = graph.getVertices(); // vertices
-        List<Graph.Edge> resFin = new ArrayList<>();
-        List<Graph.Vertex> result = new ArrayList<>();
-        Graph eul = graph;
-        Set<Graph.Edge> eulEdges = eul.getEdges();
+        Stack<Graph.Vertex> stack = new Stack<>(); // Стек, используемый при поиске эйлерова цикла
+        Set<Graph.Vertex> vertices = graph.getVertices(); // Множество всех вершин графа
+        Set<Graph.Edge> graphEdges = graph.getEdges(); // Множество всех рёбер графа
+        List<Graph.Vertex> removedVertices = new ArrayList<>(); // Список вершин, удалённых при поиске
+        List<Graph.Edge> removedEdges = new ArrayList<>(); // Список рёбер, удалённых при записи результата функции
+        List<Graph.Vertex> resultVertices = new ArrayList<>(); // Список вершин, входящих в эйлеров путь
+        List<Graph.Edge> resultEdges = new ArrayList<>(); // Список рёбер полученного эйлерова цикла
 
-        Set<Graph.Edge> graphEdges = graph.getEdges(); // edges
-
-
+        // Поиск эйлерова цикла
+        // O(n log n)
         for (Graph.Vertex v : vertices) {
             // Если граф полуэйлеровый, то алгоритм следует запускать из вершины нечётной степени
+            // O(n)
             for (Graph.Vertex ver : vertices) {
                 if (graph.getConnections(v).size() % 2 == 1) {
                     v = ver;
@@ -89,45 +96,79 @@ public class JavaGraphTasks {
                 }
             }
 
-            stack.push(v);
+            stack.push(v); // Запись в стек любой вершины графа
 
+            // O(n * log n)
             while (!stack.isEmpty()) {
-                Graph.Vertex w = stack.peek(); // Берём верхнюю вершину из стека
+                Graph.Vertex w = stack.peek(); // Берём вершину из стека
                 boolean found_edge = false; // Флаг того, что ребро найдено / не найдено
 
                 // Ищем ребро, по которому ещё не прошли
                 for (Graph.Edge edge : graphEdges) {
-                    if (eulEdges.contains(edge)) {
+                    if (!removedVertices.contains(edge.getEnd()) && (edge.getBegin() == w)) {
                         stack.push(edge.getEnd()); // Добавляем новую вершину в стек
 
-                        eulEdges.remove(edge);
+                        removedVertices.add(edge.getEnd());
 
                         found_edge = true;
                         break;
                     }
                 }
 
-                if (!found_edge) {
-                    result.add(stack.peek()); // Не нашлось инцидентных вершин рёбер, по которым ещё не прошли
-                    stack.pop();
-                }
+                if (!found_edge) resultVertices.add(stack.pop()); // Не нашлось инцидентных вершин рёбер, по которым ещё не прошли
             }
 
             break;
         }
 
-        if (result.size() != 0) {
-            for (int i = 0; i < result.size() - 2; i += 2) {
-                for (Graph.Edge edge : graphEdges) {
-                    if (edge.getBegin() == result.get(i) && edge.getEnd() == result.get(i + 1)) resFin.add(edge);
+        Graph.Vertex begin = resultVertices.get(resultVertices.size() - 1); // Начало обрабатываемого ребра при записи результата функции
+
+        // Формирование результата путём прохода всех рёбер текущей вершины
+        // O(n^2)
+        for (int i = 0; i < graphEdges.size(); i++) {
+            Map<Graph.Vertex, Graph.Edge> connections = graph.getConnections(begin); // Получение мэпа рёбер вершины
+            Graph.Vertex min = begin; // Инициализация вершины с минимальным количеством рёбер
+            Graph.Edge minEdge = new GraphBuilder.EdgeImpl(1, begin, begin); // Инициализация ребра, которое ведёт к
+
+            // Поиск любого ребра, по которому в принципе можем пройти
+            // O(n)
+            for (Map.Entry<Graph.Vertex, Graph.Edge> entry : connections.entrySet()) {
+                if (!removedEdges.contains(entry.getValue()) && ((entry.getValue().getBegin() == begin &&
+                        resultVertices.contains(entry.getValue().getEnd())) || entry.getValue().getEnd() == begin &&
+                        resultVertices.contains(entry.getValue().getBegin()))) {
+                    min = entry.getValue().getEnd();
+                    minEdge = entry.getValue();
                     break;
                 }
             }
-            GraphBuilder.EdgeImpl edge = new GraphBuilder.EdgeImpl(1, result.get(0), result.get(result.size() - 1));
-            resFin.add(edge);
+
+            // Поиск вершины возможного ребра с наименьшим количеством рёбер
+            // O(n)
+            for (Map.Entry<Graph.Vertex, Graph.Edge> entry : connections.entrySet()) {
+                if (!removedEdges.contains(entry.getValue())) {
+                    // Вершина - конец ребра
+                    if (entry.getValue().getBegin() == begin && resultVertices.contains(entry.getValue().getEnd())
+                            && graph.getConnections(entry.getValue().getEnd()).size() <= graph.getConnections(min).size()) {
+                        min = entry.getValue().getEnd();
+                        minEdge = entry.getValue();
+                    }
+
+                    // Вершина - начало ребра
+                    if (entry.getValue().getEnd() == begin && resultVertices.contains(entry.getValue().getBegin())
+                            && graph.getConnections(entry.getValue().getEnd()).size() <= graph.getConnections(min).size()) {
+                        min = entry.getValue().getBegin();
+                        minEdge = entry.getValue();
+                    }
+                }
+            }
+
+            // Запись результатов и обновление начала следующего ребра
+            begin = min;
+            resultEdges.add(minEdge);
+            removedEdges.add(minEdge);
         }
 
-        return resFin;
+        return resultEdges;
     }
 
     /**
@@ -245,6 +286,42 @@ public class JavaGraphTasks {
      * Остальные символы ни в файле, ни в словах не допускаются.
      */
     static public Set<String> baldaSearcher(String inputName, Set<String> words) {
-        throw new NotImplementedError();
+        List<List<String>> full = new ArrayList<>();
+        Set<String> result = new HashSet<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                List<String> current = new ArrayList<>();
+                String[] regexStr = line.split("[а-яА-Яa-zA-Z]");
+
+                for (String str : regexStr) {
+                    current.add(str);
+                    System.out.print(str + " ");
+                }
+
+                full.add(current);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        GraphBuilder graph = new GraphBuilder();
+        for (int i = 0; i < full.size(); i++) {
+            for (int j = 0; j < full.get(i).size() - 1; j++) {
+                String current = full.get(i).get(j);
+                graph.addVertex(current);
+
+                if (i == 0 || i == full.size() - 1) {
+                    if (j == 0 || j == full.get(i).size() - 1) {
+
+                    }
+                }
+            }
+        }
+
+
+        return result;
     }
 }

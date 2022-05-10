@@ -286,42 +286,6 @@ public class JavaGraphTasks {
      * Остальные символы ни в файле, ни в словах не допускаются.
      */
     static public Set<String> baldaSearcher(String inputName, Set<String> words) {
-        List<List<String>> full = new ArrayList<>();
-        Set<String> result = new HashSet<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputName))) {
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                List<String> current = new ArrayList<>();
-                String[] regexStr = line.split("[а-яА-Яa-zA-Z]");
-
-                for (String str : regexStr) {
-                    current.add(str);
-                    System.out.print(str + " ");
-                }
-
-                full.add(current);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        GraphBuilder graph = new GraphBuilder();
-        for (int i = 0; i < full.size(); i++) {
-            for (int j = 0; j < full.get(i).size() - 1; j++) {
-                String current = full.get(i).get(j);
-                graph.addVertex(current);
-
-                if (i == 0 || i == full.size() - 1) {
-                    if (j == 0 || j == full.get(i).size() - 1) {
-
-                    }
-                }
-            }
-        }
-
-
-        return result;
+        throw new NotImplementedError();
     }
 }
